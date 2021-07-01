@@ -16,6 +16,7 @@ enum CommandType: String, Codable {
     case wait
     case tapAndWait
     case staticTextExists
+    case switchValue
     case disconnect
 }
 
@@ -25,14 +26,16 @@ enum ElementIdentificationType: String, Codable {
 }
 
 struct ElementIdentification: Codable {
-    let elementIdentification: String?
-    let staticText: String?
+    var elementIdentification: String? = nil
+    var staticText: String? = nil
 }
 
 struct Command: Codable {
     let commandType: CommandType
-    let identificationType: ElementIdentificationType
-    let identification: String
+    var identificationType: ElementIdentificationType = .accessibilityId
+    var identification: ElementIdentification? = nil
+//    let accessibilityId: String?
+//    let staticText: String?
     var element: ElementType? = nil
     var waitTimeout: Int = 0
 }
@@ -41,6 +44,3 @@ enum ElementType: UInt, Codable {
     case button = 0
 }
 
-struct AccessibilityId: String, Codable {
-//    let
-}

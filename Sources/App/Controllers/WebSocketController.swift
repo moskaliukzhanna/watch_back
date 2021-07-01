@@ -19,6 +19,7 @@ class WebSocketController {
     let logger: Logger
     private let decoder = JSONDecoder()
     private let uuid = UUID()
+    var switchesCount = 0
     
     init() {
         self.lock = Lock()
@@ -52,8 +53,8 @@ class WebSocketController {
         
         // send test commands
         self.staticTextExists()
-//        self.sendIsEnabled()
-//        self.tapAndWait()
+        //        self.sendIsEnabled()
+        //        self.tapAndWait()
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -109,7 +110,7 @@ class WebSocketController {
         let command = response.command
         
         if response.success {
-            print("Command \(command.commandType) with id: \(command.identification) executed successfully")
+            print("Command \(command.commandType) with id: \(command.identification ?? "") executed successfully")
             // DELETE LATER
             // ONLY FOR TESTING
             // run test commands when previous one is finished
@@ -119,54 +120,80 @@ class WebSocketController {
                 sendIsEnabled()
             case .isEnabled:
                 tapAndWait()
-                
             case .tapAndWait:
                 makeTestScreenshot()
+            case .makesreenshot:
+                if switchesCount < 4 {
+                    sendSwitch()
+                }
+            case .switchValue:
+                // switch back a few times
+                if switchesCount < 4 {
+                    sendSwitch()
+                } else {
+                    tapBackButton()
+                    // make screenshot after that
+                    makeTestScreenshot()
+                }
             default:
                 break
             }
         }
         if let error = response.error, let commandError = CommandExecutionError(rawValue: error) {
-            print("Failed to execute command \(command.commandType) of id: \(command.identification) with error: \(commandError.errorDescriprion)")
+            print("Failed to execute command \(command.commandType) of id: \(command.identification ?? "") with error: \(commandError.errorDescriprion)")
         }
     }
     
     private func sendTestTap() {
         // tap on "Start" button, it should take us to the next screen
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tap, identificationType: .accessibilityId, identification: "start_button")
+        let command = Command(commandType: .tap, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
     private func makeTestScreenshot() {
         guard let socket = sockets[uuid] else { return }
         // Make screenshot on the next screen
-        let command = Command(commandType: .makesreenshot, identificationType: .accessibilityId, identification: "")
+        let command = Command(commandType: .makesreenshot)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
     private func tapAndWait() {
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: "start_button", waitTimeout: 5)
+        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"), waitTimeout: 5)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
     private func sendIsEnabled() {
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .isEnabled, identificationType: .accessibilityId, identification: "start_button")
+        let command = Command(commandType: .isEnabled, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
     private func staticTextExists() {
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .staticTextExists, identificationType: .accessibilityId, identification: "Start")
+        let command = Command(commandType: .staticTextExists, identificationType: .staticText, identification: ElementIdentification(staticText: "Hello there!"))
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func sendSwitch() {
+        switchesCount += 1
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .switchValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "catSwitch"))
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func tapBackButton() {
+        // now go back to the main screen
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 5)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
     private func sendDisconnect() {
         guard let socket = sockets[uuid] else { return }
         // send shutdown message to the client
-        let command = Command(commandType: .disconnect, identificationType: .accessibilityId, identification: "")
+        let command = Command(commandType: .disconnect)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
 }
