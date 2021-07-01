@@ -7,18 +7,21 @@
 
 import Foundation
 
-enum CommandExecutionError: Error {
-    case success
-    case failure
-}
-
-extension CommandExecutionError {
-    var errorDescription: String {
+enum CommandExecutionError: String, Error {
+    
+    case unknownCommand
+    case unknownElement
+    case unknownIdentifier
+    
+    var errorDescriprion: String {
         switch self {
-        case .success:
-            return "Command was successfully executed"
-        case .failure:
-            return "Command execution has failed"
+        case .unknownCommand:
+            return "Could not find such command"
+        case .unknownElement:
+            return "Could not find such element"
+        default:
+            return "error"
+            
         }
     }
 }

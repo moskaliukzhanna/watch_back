@@ -8,8 +8,8 @@
 import Foundation
 
 enum TestMessageType: String, Codable {
-    case clientToServer
-    case serverToClient, handshake
+    case clientToServer, response
+    case serverToClient, handshake, disconnect
 }
 
 struct TestMessageSinData: Codable {
@@ -28,11 +28,25 @@ struct ClientToServerMessage: Codable {
 
 struct ServerToClientMessage: Codable {
     let type = TestMessageType.serverToClient
-    let success: Bool
-    let message: String
     let id: UUID?
-    var answered: Bool
-    let content: String
+    let command: Command
     let createdAt: Date?
 }
 
+struct ClientToServerResponse: Codable {
+    let type: TestMessageType
+    let id: UUID?
+    let response: CommandExecutionResult
+}
+
+struct ShutdownMessage: Codable {
+    let type = TestMessageType.disconnect
+    let id: UUID?
+    let sentAt: Date? 
+}
+
+struct CommandExecutionResult: Codable {
+    var success: Bool
+    let command: Command
+    let error: String?
+}
