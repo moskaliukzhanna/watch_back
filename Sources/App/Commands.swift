@@ -12,11 +12,11 @@ enum CommandType: String, Codable {
     case isSelected
     case tap
     case makesreenshot
-    case checkGoToScreen
     case wait
     case tapAndWait
     case staticTextExists
     case switchValue
+    case swipeLeft
     case disconnect
 }
 

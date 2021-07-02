@@ -20,6 +20,7 @@ class WebSocketController {
     private let decoder = JSONDecoder()
     private let uuid = UUID()
     var switchesCount = 0
+    var screenshotsCount = 0
     
     init() {
         self.lock = Lock()
@@ -53,8 +54,6 @@ class WebSocketController {
         
         // send test commands
         self.staticTextExists()
-        //        self.sendIsEnabled()
-        //        self.tapAndWait()
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -110,7 +109,7 @@ class WebSocketController {
         let command = response.command
         
         if response.success {
-            print("Command \(command.commandType) with id: \(command.identification ?? "") executed successfully")
+            print("Command \(command.commandType) with id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") executed successfully")
             // DELETE LATER
             // ONLY FOR TESTING
             // run test commands when previous one is finished
@@ -125,6 +124,8 @@ class WebSocketController {
             case .makesreenshot:
                 if switchesCount < 4 {
                     sendSwitch()
+                } else {
+                    sendDisconnect()
                 }
             case .switchValue:
                 // switch back a few times
@@ -140,7 +141,7 @@ class WebSocketController {
             }
         }
         if let error = response.error, let commandError = CommandExecutionError(rawValue: error) {
-            print("Failed to execute command \(command.commandType) of id: \(command.identification ?? "") with error: \(commandError.errorDescriprion)")
+            print("Failed to execute command \(command.commandType) of id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") with error: \(commandError.errorDescriprion)")
         }
     }
     
@@ -152,6 +153,7 @@ class WebSocketController {
     }
     
     private func makeTestScreenshot() {
+        screenshotsCount += 1
         guard let socket = sockets[uuid] else { return }
         // Make screenshot on the next screen
         let command = Command(commandType: .makesreenshot)
@@ -160,7 +162,7 @@ class WebSocketController {
     
     private func tapAndWait() {
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"), waitTimeout: 5)
+        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"), waitTimeout: 3)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
@@ -186,14 +188,19 @@ class WebSocketController {
     private func tapBackButton() {
         // now go back to the main screen
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 5)
+        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 3)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func swipeLeft() {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .swipeLeft, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "swipe_group"), waitTimeout: 0)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
     private func sendDisconnect() {
         guard let socket = sockets[uuid] else { return }
         // send shutdown message to the client
-        let command = Command(commandType: .disconnect)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+        self.send(message: ShutdownMessage(id: uuid, sentAt: Date()), to: .socket(socket))
     }
 }
