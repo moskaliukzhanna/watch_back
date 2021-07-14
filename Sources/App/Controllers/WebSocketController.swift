@@ -20,7 +20,6 @@ class WebSocketController {
     private let decoder = JSONDecoder()
     private let uuid = UUID()
     var switchesCount = 0
-    var screenshotsCount = 0
     
     init() {
         self.lock = Lock()
@@ -29,7 +28,6 @@ class WebSocketController {
     }
     
     func connect(_ ws: WebSocket) {
-        //        uuid = UUID()
         self.lock.withLockVoid {
             self.sockets[uuid] = ws
         }
@@ -51,7 +49,7 @@ class WebSocketController {
             self.onData(ws, data)
         }
         self.send(message: TestMessageHandshake(id: uuid), to: .socket(ws))
-        
+        self.switchesCount = 0
         // send test commands
         self.staticTextExists()
     }
@@ -118,7 +116,7 @@ class WebSocketController {
             case .staticTextExists:
                 sendIsEnabled()
             case .isEnabled:
-                tapAndWait()
+                tapAndWait(id: "start_button")
             case .tapAndWait:
                 makeTestScreenshot()
             case .makesreenshot:
@@ -134,7 +132,7 @@ class WebSocketController {
                 } else {
                     tapBackButton()
                     // make screenshot after that
-                    makeTestScreenshot()
+//                    makeTestScreenshot()
                 }
             default:
                 break
@@ -153,16 +151,15 @@ class WebSocketController {
     }
     
     private func makeTestScreenshot() {
-        screenshotsCount += 1
         guard let socket = sockets[uuid] else { return }
         // Make screenshot on the next screen
-        let command = Command(commandType: .makesreenshot)
+        let command = Command(commandType: .makesreenshot, waitTimeout: 2)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
-    private func tapAndWait() {
+    private func tapAndWait(id: String) {
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"), waitTimeout: 3)
+        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: id), waitTimeout: 3)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
@@ -195,6 +192,18 @@ class WebSocketController {
     private func swipeLeft() {
         guard let socket = sockets[uuid] else { return }
         let command = Command(commandType: .swipeLeft, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "swipe_group"), waitTimeout: 0)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func pickerSetValue() {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .setPicketValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_picker"), waitTimeout: 0)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func scrollTableForStaticTextCell() {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .tableStaticTextCellScroll, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "onboardingTable"), waitTimeout: 0)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     

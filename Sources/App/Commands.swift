@@ -17,6 +17,8 @@ enum CommandType: String, Codable {
     case staticTextExists
     case switchValue
     case swipeLeft
+    case setPicketValue
+    case tableStaticTextCellScroll
     case disconnect
 }
 
