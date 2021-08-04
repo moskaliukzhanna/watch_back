@@ -12,13 +12,15 @@ enum CommandType: String, Codable {
     case isSelected
     case tap
     case makesreenshot
-    case wait
+    case elementSreenshot
+    case setSliderValue
+//    case wait
     case tapAndWait
     case staticTextExists
     case switchValue
-    case swipeLeft
-    case setPicketValue
-    case tableStaticTextCellScroll
+//    case swipeLeft
+//    case setPicketValue
+//    case tableStaticTextCellScroll
     case disconnect
 }
 

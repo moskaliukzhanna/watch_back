@@ -19,6 +19,7 @@ class WebSocketController {
     let logger: Logger
     private let decoder = JSONDecoder()
     private let uuid = UUID()
+    // TODO: - switchesCount remove later
     var switchesCount = 0
     
     init() {
@@ -114,26 +115,27 @@ class WebSocketController {
             
             switch command.commandType {
             case .staticTextExists:
-                sendIsEnabled()
-            case .isEnabled:
-                tapAndWait(id: "start_button")
-            case .tapAndWait:
-                makeTestScreenshot()
-            case .makesreenshot:
-                if switchesCount < 4 {
-                    sendSwitch()
-                } else {
-                    sendDisconnect()
-                }
-            case .switchValue:
-                // switch back a few times
-                if switchesCount < 4 {
-                    sendSwitch()
-                } else {
-                    tapBackButton()
-                    // make screenshot after that
-//                    makeTestScreenshot()
-                }
+                testSetSliderValue()
+//                sendIsEnabled()
+//            case .isEnabled:
+//                tapAndWait(id: "start_button")
+//            case .tapAndWait:
+//                makeTestElementScreenshot(id: "catImage")
+//            case .makesreenshot:
+//                if switchesCount < 4 {
+//                    sendSwitch()
+//                } else {
+//                    sendDisconnect()
+//                }
+//            case .switchValue:
+//                // switch back a few times
+//                if switchesCount < 4 {
+//                    sendSwitch()
+//                } else {
+//                    tapBackButton()
+//                }
+//            case .elementSreenshot:
+//                sendDisconnect()
             default:
                 break
             }
@@ -154,6 +156,13 @@ class WebSocketController {
         guard let socket = sockets[uuid] else { return }
         // Make screenshot on the next screen
         let command = Command(commandType: .makesreenshot, waitTimeout: 2)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func makeTestElementScreenshot(id: String) {
+        guard let socket = sockets[uuid] else { return }
+        // Make screenshot on the next screen
+        let command = Command(commandType: .elementSreenshot, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: id), waitTimeout: 0)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
@@ -189,21 +198,27 @@ class WebSocketController {
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
-    private func swipeLeft() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .swipeLeft, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "swipe_group"), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
+//    private func swipeLeft() {
+//        guard let socket = sockets[uuid] else { return }
+//        let command = Command(commandType: .swipeLeft, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "swipe_group"), waitTimeout: 0)
+//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+//    }
+//    
+//    private func pickerSetValue() {
+//        guard let socket = sockets[uuid] else { return }
+//        let command = Command(commandType: .setPicketValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_picker"), waitTimeout: 0)
+//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+//    }
+//    
+//    private func scrollTableForStaticTextCell() {
+//        guard let socket = sockets[uuid] else { return }
+//        let command = Command(commandType: .tableStaticTextCellScroll, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "onboardingTable"), waitTimeout: 0)
+//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+//    }
     
-    private func pickerSetValue() {
+    private func testSetSliderValue() {
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .setPicketValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_picker"), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func scrollTableForStaticTextCell() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tableStaticTextCellScroll, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "onboardingTable"), waitTimeout: 0)
+        let command = Command(commandType: .setSliderValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_slider"), waitTimeout: 0)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
