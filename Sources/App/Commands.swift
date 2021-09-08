@@ -20,7 +20,9 @@ enum CommandType: String, Codable {
     case switchValue
 //    case swipeLeft
 //    case setPicketValue
-//    case tableStaticTextCellScroll
+    case swipeRight
+    case tableStaticTextCellScrollDown
+    case tableStaticTextCellScrollUp
     case disconnect
 }
 

@@ -21,6 +21,7 @@ class WebSocketController {
     private let uuid = UUID()
     // TODO: - switchesCount remove later
     var switchesCount = 0
+    var tapCount = 0
     
     init() {
         self.lock = Lock()
@@ -52,7 +53,8 @@ class WebSocketController {
         self.send(message: TestMessageHandshake(id: uuid), to: .socket(ws))
         self.switchesCount = 0
         // send test commands
-        self.staticTextExists()
+        self.tapAndWait(id: "table_button")
+        tapCount = 0
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -112,10 +114,19 @@ class WebSocketController {
             // DELETE LATER
             // ONLY FOR TESTING
             // run test commands when previous one is finished
-            
             switch command.commandType {
-            case .staticTextExists:
-                testSetSliderValue()
+//            case .staticTextExists:
+//                tapAndWait(id: "second_button")
+            case .tapAndWait:
+                if tapCount < 2 {
+                scrollTableDownForStaticTextCell(text: "23.11.2019.")
+                tapCount += 1
+            }
+            case .tableStaticTextCellScrollDown:
+                scrollTableUpForStaticTextCell(text: "23.10.2020.")
+            case .tableStaticTextCellScrollUp:
+                tapAndWait(text: "23.10.2020.")
+                tapCount += 1
 //                sendIsEnabled()
 //            case .isEnabled:
 //                tapAndWait(id: "start_button")
@@ -172,6 +183,12 @@ class WebSocketController {
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
+    private func tapAndWait(text: String) {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .tapAndWait, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
     private func sendIsEnabled() {
         guard let socket = sockets[uuid] else { return }
         let command = Command(commandType: .isEnabled, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
@@ -210,11 +227,17 @@ class WebSocketController {
 //        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
 //    }
 //    
-//    private func scrollTableForStaticTextCell() {
-//        guard let socket = sockets[uuid] else { return }
-//        let command = Command(commandType: .tableStaticTextCellScroll, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "onboardingTable"), waitTimeout: 0)
-//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-//    }
+    private func scrollTableDownForStaticTextCell(text: String) {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .tableStaticTextCellScrollDown, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func scrollTableUpForStaticTextCell(text: String) {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .tableStaticTextCellScrollUp, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
     
     private func testSetSliderValue() {
         guard let socket = sockets[uuid] else { return }
