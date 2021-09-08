@@ -16,6 +16,7 @@ enum CommandType: String, Codable {
     case setSliderValue
 //    case wait
     case tapAndWait
+    case tapBackButton
     case staticTextExists
     case switchValue
 //    case swipeLeft

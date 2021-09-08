@@ -22,6 +22,7 @@ class WebSocketController {
     // TODO: - switchesCount remove later
     var switchesCount = 0
     var tapCount = 0
+    var backTapCount = 0
     
     init() {
         self.lock = Lock()
@@ -55,6 +56,7 @@ class WebSocketController {
         // send test commands
         self.tapAndWait(id: "table_button")
         tapCount = 0
+        backTapCount = 0
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -121,12 +123,20 @@ class WebSocketController {
                 if tapCount < 2 {
                 scrollTableDownForStaticTextCell(text: "23.11.2019.")
                 tapCount += 1
-            }
+                } else {
+                    tapBackButton()
+                    backTapCount += 1
+                }
             case .tableStaticTextCellScrollDown:
                 scrollTableUpForStaticTextCell(text: "23.10.2020.")
             case .tableStaticTextCellScrollUp:
                 tapAndWait(text: "23.10.2020.")
                 tapCount += 1
+            case .tapBackButton:
+                if backTapCount < 2 {
+                tapBackButton()
+                backTapCount += 1
+                }
 //                sendIsEnabled()
 //            case .isEnabled:
 //                tapAndWait(id: "start_button")
@@ -211,7 +221,7 @@ class WebSocketController {
     private func tapBackButton() {
         // now go back to the main screen
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 3)
+        let command = Command(commandType: .tapBackButton, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 3)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
