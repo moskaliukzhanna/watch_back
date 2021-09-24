@@ -123,9 +123,11 @@ class WebSocketController {
                 if tapCount < 2 {
                 scrollTableDownForStaticTextCell(text: "23.11.2019.")
                 tapCount += 1
-                } else {
+                } else if tapCount < 3 {
                     tapBackButton()
                     backTapCount += 1
+                } else if command.identification?.elementIdentification ==  "goToColorButton" {
+                    swipeDown(text: "Yellow")
                 }
             case .tableStaticTextCellScrollDown:
                 scrollTableUpForStaticTextCell(text: "23.10.2020.")
@@ -136,7 +138,11 @@ class WebSocketController {
                 if backTapCount < 2 {
                 tapBackButton()
                 backTapCount += 1
+                } else {
+                    tapAndWait(id: "goToColorButton")
+                    tapCount += 1
                 }
+                
 //                sendIsEnabled()
 //            case .isEnabled:
 //                tapAndWait(id: "start_button")
@@ -246,6 +252,12 @@ class WebSocketController {
     private func scrollTableUpForStaticTextCell(text: String) {
         guard let socket = sockets[uuid] else { return }
         let command = Command(commandType: .tableStaticTextCellScrollUp, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
+        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    }
+    
+    private func swipeDown(text: String) {
+        guard let socket = sockets[uuid] else { return }
+        let command = Command(commandType: .swipeDown, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
         self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
     }
     
