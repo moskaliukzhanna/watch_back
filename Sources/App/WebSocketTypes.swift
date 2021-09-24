@@ -7,6 +7,43 @@
 
 import Foundation
 
+enum WatchCommand: String, Codable {
+    case element = "/element"
+    case touch = "/touch/click"
+    case screenshot = "/screenshot"
+}
+
+enum WebSocketMessageType: String, Codable {
+    case outcomingMessage = "/POST" // server ---> client
+    case incomingMessage = "/GET" // client ---> server
+}
+
+struct OutcomingMessage: Codable {
+    let method: WebSocketMessageType
+    let path: WatchCommand
+    let data: Details?
+}
+
+struct Details: Codable {
+    let element: Element?
+    let timeout: Int?
+    let using: Identification?
+    let value: String?
+}
+
+enum Identification: String, Codable {
+    case id = "id"
+    case text = "text"
+}
+
+struct Element: Codable {
+    let id: String?
+}
+
+
+
+
+
 enum TestMessageType: String, Codable {
     case clientToServer, response
     case serverToClient, handshake, disconnect

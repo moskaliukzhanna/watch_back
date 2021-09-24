@@ -53,8 +53,10 @@ class WebSocketController {
         }
         self.send(message: TestMessageHandshake(id: uuid), to: .socket(ws))
         self.switchesCount = 0
+        
         // send test commands
-        self.tapAndWait(id: "table_button")
+        testFindElement()
+        
         tapCount = 0
         backTapCount = 0
     }
@@ -113,163 +115,51 @@ class WebSocketController {
         
         if response.success {
             print("Command \(command.commandType) with id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") executed successfully")
-            // DELETE LATER
-            // ONLY FOR TESTING
-            // run test commands when previous one is finished
-            switch command.commandType {
-//            case .staticTextExists:
-//                tapAndWait(id: "second_button")
-            case .tapAndWait:
-                if tapCount < 2 {
-                scrollTableDownForStaticTextCell(text: "23.11.2019.")
-                tapCount += 1
-                } else if tapCount < 3 {
-                    tapBackButton()
-                    backTapCount += 1
-                } else if command.identification?.elementIdentification ==  "goToColorButton" {
-                    swipeDown(text: "Yellow")
-                }
-            case .tableStaticTextCellScrollDown:
-                scrollTableUpForStaticTextCell(text: "23.10.2020.")
-            case .tableStaticTextCellScrollUp:
-                tapAndWait(text: "23.10.2020.")
-                tapCount += 1
-            case .tapBackButton:
-                if backTapCount < 2 {
-                tapBackButton()
-                backTapCount += 1
-                } else {
-                    tapAndWait(id: "goToColorButton")
-                    tapCount += 1
-                }
-                
-//                sendIsEnabled()
-//            case .isEnabled:
-//                tapAndWait(id: "start_button")
-//            case .tapAndWait:
-//                makeTestElementScreenshot(id: "catImage")
-//            case .makesreenshot:
-//                if switchesCount < 4 {
-//                    sendSwitch()
-//                } else {
-//                    sendDisconnect()
-//                }
-//            case .switchValue:
-//                // switch back a few times
-//                if switchesCount < 4 {
-//                    sendSwitch()
-//                } else {
-//                    tapBackButton()
-//                }
-//            case .elementSreenshot:
-//                sendDisconnect()
-            default:
-                break
-            }
         }
+        
+        
         if let error = response.error, let commandError = CommandExecutionError(rawValue: error) {
             print("Failed to execute command \(command.commandType) of id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") with error: \(commandError.errorDescriprion)")
         }
     }
-    
-    private func sendTestTap() {
-        // tap on "Start" button, it should take us to the next screen
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tap, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func makeTestScreenshot() {
-        guard let socket = sockets[uuid] else { return }
-        // Make screenshot on the next screen
-        let command = Command(commandType: .makesreenshot, waitTimeout: 2)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func makeTestElementScreenshot(id: String) {
-        guard let socket = sockets[uuid] else { return }
-        // Make screenshot on the next screen
-        let command = Command(commandType: .elementSreenshot, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: id), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func tapAndWait(id: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: id), waitTimeout: 3)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func tapAndWait(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func sendIsEnabled() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .isEnabled, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func staticTextExists() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .staticTextExists, identificationType: .staticText, identification: ElementIdentification(staticText: "Hello there!"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func sendSwitch() {
-        switchesCount += 1
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .switchValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "catSwitch"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func tapBackButton() {
-        // now go back to the main screen
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapBackButton, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 3)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-//    private func swipeLeft() {
-//        guard let socket = sockets[uuid] else { return }
-//        let command = Command(commandType: .swipeLeft, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "swipe_group"), waitTimeout: 0)
-//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+}
+
+//element(using, value) {
+//        return this.jsonWireCall({
+//            method: 'POST',
+//            relPath: `/element`,
+//            data: {
+//                using,
+//                value
+//            }
+//        });
 //    }
-//    
-//    private func pickerSetValue() {
-//        guard let socket = sockets[uuid] else { return }
-//        let command = Command(commandType: .setPicketValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_picker"), waitTimeout: 0)
-//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+//
+//    tapElement(element, timeout) {
+//        return this.jsonWireCall({
+//            method: 'POST',
+//            relPath: `/touch/click`,
+//            data: {
+//                element,
+//                timeout
+//            }
+//        });
 //    }
-//    
-    private func scrollTableDownForStaticTextCell(text: String) {
+//
+//screenshot
+
+extension WebSocketController {
+
+    private func testFindElement() {
+        
         guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tableStaticTextCellScrollDown, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func scrollTableUpForStaticTextCell(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tableStaticTextCellScrollUp, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func swipeDown(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .swipeDown, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func testSetSliderValue() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .setSliderValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_slider"), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func sendDisconnect() {
-        guard let socket = sockets[uuid] else { return }
-        // send shutdown message to the client
-        self.send(message: ShutdownMessage(id: uuid, sentAt: Date()), to: .socket(socket))
+        
+        let data = Details(using: .id, value: "start_button")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .element, data: data)
+        
+        send(message: OutcomingMessage, to: socket)
     }
 }
+
+
+
