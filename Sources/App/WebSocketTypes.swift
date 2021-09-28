@@ -8,6 +8,7 @@
 import Foundation
 
 enum WatchCommand: String, Codable {
+    case initial = "/init"
     case element = "/element"
     case touch = "/touch/click"
     case screenshot = "/screenshot"
@@ -21,14 +22,14 @@ enum WebSocketMessageType: String, Codable {
 struct OutcomingMessage: Codable {
     let method: WebSocketMessageType
     let path: WatchCommand
-    let data: Details?
+    var data: Details? = nil
 }
 
 struct Details: Codable {
-    let element: Element?
-    let timeout: Int?
-    let using: Identification?
-    let value: String?
+    var element: Element? = nil
+    var timeout: Int? = nil
+    var using: Identification? = nil
+    var value: String? = nil
 }
 
 enum Identification: String, Codable {

@@ -15,7 +15,8 @@ enum WebSocketSendOption {
 
 class WebSocketController {
     let lock: Lock
-    var sockets: [UUID: WebSocket]
+//    var sockets: [UUID: WebSocket]
+    var sockets: [WebSocket]
     let logger: Logger
     private let decoder = JSONDecoder()
     private let uuid = UUID()
@@ -26,13 +27,15 @@ class WebSocketController {
     
     init() {
         self.lock = Lock()
-        self.sockets = [:]
+//        self.sockets = [:]
+        self.sockets = []
         self.logger = Logger(label: "WebSocketController")
     }
     
     func connect(_ ws: WebSocket) {
         self.lock.withLockVoid {
-            self.sockets[uuid] = ws
+//            self.sockets[uuid] = ws
+            self.sockets.append(ws)
         }
         ws.onBinary { [weak self] ws, buffer in
             guard let self = self,
@@ -51,7 +54,10 @@ class WebSocketController {
             
             self.onData(ws, data)
         }
-        self.send(message: TestMessageHandshake(id: uuid), to: .socket(ws))
+//        self.send(message: TestMessageHandshake(id: uuid), to: .socket(ws))
+        
+        let initialMessage = OutcomingMessage(method: .outcomingMessage, path: .initial, data: nil)
+        self.send(message: initialMessage, to: .socket(ws))
         self.switchesCount = 0
         
         // send test commands
@@ -66,14 +72,20 @@ class WebSocketController {
         do {
             let sockets: [WebSocket] = self.lock.withLock {
                 switch sendOption {
-                case .id(let id):
-                    return [self.sockets[id]].compactMap { $0 }
+//                case .id(let id):
+//                    return [self.sockets[id]].compactMap { $0 }
+//                break
                 case .socket(let socket):
                     return [socket]
-                case .all:
-                    return self.sockets.values.map { $0 }
-                case .ids(let ids):
-                    return self.sockets.filter { key, _ in ids.contains(key) }.map { $1 }
+//                case .all:
+//                    return self.sockets.values.map { $0 }
+//                break
+//                case .ids(let ids):
+//                    return self.sockets.filter { key, _ in ids.contains(key) }.map { $1 }
+//                break
+                default:
+                    return self.sockets
+                    break
                 }
             }
             let encoder = JSONEncoder()
@@ -152,12 +164,12 @@ extension WebSocketController {
 
     private func testFindElement() {
         
-        guard let socket = sockets[uuid] else { return }
-        
-        let data = Details(using: .id, value: "start_button")
+        guard let socket = sockets.first else { return }
+
+        let data = Details(using: .id, value: "goToColorButton")
         let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .element, data: data)
-        
-        send(message: OutcomingMessage, to: socket)
+
+        send(message: outcommingMessage, to:  .socket(socket))
     }
 }
 
