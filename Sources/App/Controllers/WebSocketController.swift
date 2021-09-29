@@ -102,38 +102,55 @@ class WebSocketController {
     private func onData(_ ws: WebSocket, _ data: Data) {
         self.logger.info("\(String(data: data, encoding: .utf8) ?? "Malformed data")")
         
+//        do {
+//            try handleData(data: data)
+//        } catch {
+//            print("Failed to handle data with error: \(error.localizedDescription)")
+//        }
+        handleData(data: data)
+    }
+    
+    private func handleData(data: Data) {
+//        let messageFromClient = try decoder.decode(TestMessageSinData.self, from: data)
+        
+//        switch messageFromClient.type {
+//        case .response:
+//            try handleClientResponse(data: data)
+//        default:
+//            break
+//        }
         do {
-            try handleData(data: data)
+            let responseFromClient = try decoder.decode(ExecutionResponse.self, from: data)
+            
+            let status = responseFromClient.status
+            let info = responseFromClient.detail
+            
+            print("Command executed with status \(status) : \(info)")
         } catch {
-            print("Failed to handle data with error: \(error.localizedDescription)")
+            print("Failed to decode client's response with error: \(error.localizedDescription)")
         }
     }
     
-    private func handleData(data: Data) throws {
-        let messageFromClient = try decoder.decode(TestMessageSinData.self, from: data)
-        
-        switch messageFromClient.type {
-        case .response:
-            try handleClientResponse(data: data)
-        default:
-            break
-        }
-    }
-    
-    private func handleClientResponse(data: Data) throws {
-        let responseFromClient = try decoder.decode(ClientToServerResponse.self, from: data)
-        let response = responseFromClient.response
-        let command = response.command
-        
-        if response.success {
-            print("Command \(command.commandType) with id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") executed successfully")
-        }
-        
-        
-        if let error = response.error, let commandError = CommandExecutionError(rawValue: error) {
-            print("Failed to execute command \(command.commandType) of id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") with error: \(commandError.errorDescriprion)")
-        }
-    }
+//    private func handleClientResponse(data: Data) throws {
+//        do {
+//            let responseFromClient = try decoder.decode(ExecutionResponse.self, from: data)
+//        } catch {
+//
+//        }
+//
+//        let status = responseFromClient.status
+//        let info = responseFromClient.detail
+//
+//        print("Command executed with status \(status) : \(info)")
+//        if response.success {
+//            print("Command execution failed with statuc\(status) with id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") executed successfully")
+//        }
+//
+//
+//        if let error = response.error, let commandError = CommandExecutionError(rawValue: error) {
+//            print("Failed to execute command \(command.commandType) of id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") with error: \(commandError.errorDescriprion)")
+//        }
+//    }
 }
 
 //element(using, value) {
