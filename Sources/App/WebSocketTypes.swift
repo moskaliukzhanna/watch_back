@@ -9,9 +9,12 @@ import Foundation
 
 enum WatchCommand: String, Codable {
     case initial = "/init"
+    case shutdown = "/shutdown"
     case element = "/element"
     case touch = "/touch/click"
     case screenshot = "/screenshot"
+    case scrollTableDown = "/table/scroll/down"
+    case scrollTableUp = "/table/scroll/up"
 }
 
 enum WebSocketMessageType: String, Codable {
