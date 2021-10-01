@@ -20,10 +20,8 @@ class WebSocketController {
     let logger: Logger
     private let decoder = JSONDecoder()
     private let uuid = UUID()
-    // TODO: - switchesCount remove later
-    var switchesCount = 0
-    var tapCount = 0
-    var backTapCount = 0
+    // TODO: - remove those dummies later
+    var commandsCount = 0
     
     init() {
         self.lock = Lock()
@@ -56,13 +54,12 @@ class WebSocketController {
         }
         let initialMessage = OutcomingMessage(method: .outcomingMessage, path: .initial, data: nil)
         self.send(message: initialMessage, to: .socket(ws))
-        self.switchesCount = 0
         
         // send test commands
         testFindElement()
-        
-        tapCount = 0
-        backTapCount = 0
+        testTapButton()
+        testScrollDownTable()
+        testScrollUpTable()
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -111,27 +108,58 @@ class WebSocketController {
             let info = responseFromClient.detail
             
             print("Command executed with status \(status) : \(info)")
-            if let socket = sockets.first {
+            // TODO: - remove this later
+            if let socket = sockets.first, commandsCount <= 2 {
                 let shutdownMessage = OutcomingMessage(method: .outcomingMessage, path: .shutdown)
-                self.send(message: shutdownMessage, to: .socket(socket))
+//                self.send(message: shutdownMessage, to: .socket(socket))
             }
         } catch {
             print("Failed to decode client's response with error: \(error.localizedDescription)")
         }
     }
 }
-    extension WebSocketController {
+extension WebSocketController {
+    
+    private func testFindElement() {
+        commandsCount += 1
+        guard let socket = sockets.first else { return }
         
-        private func testFindElement() {
-            
-            guard let socket = sockets.first else { return }
-            
-            let data = Details(using: .id, value: "goToColorButton")
-            let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .element, data: data)
-            
-            send(message: outcommingMessage, to:  .socket(socket))
-        }
+        let data = Details(using: .id, value: "goToColorButton")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .element, data: data)
+        
+        send(message: outcommingMessage, to:  .socket(socket))
     }
+    
+    private func testTapButton() {
+        commandsCount += 1
+        guard let socket = sockets.first else { return }
+        
+        let data = Details(using: .id, value: "table_button")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .touch, data: data)
+        
+        send(message: outcommingMessage, to:  .socket(socket))
+    }
+    
+    private func testScrollDownTable() {
+        commandsCount += 1
+        guard let socket = sockets.first else { return }
+        
+        let data = Details(using: .text, value: "21.11.2019.")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: data)
+        
+        send(message: outcommingMessage, to:  .socket(socket))
+    }
+    
+    private func testScrollUpTable() {
+        commandsCount += 1
+        guard let socket = sockets.first else { return }
+        
+        let data = Details(using: .text, value: "23.10.2020.")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .scrollTableUp, data: data)
+        
+        send(message: outcommingMessage, to:  .socket(socket))
+    }
+}
 
 
 
