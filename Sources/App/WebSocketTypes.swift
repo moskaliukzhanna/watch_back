@@ -44,9 +44,11 @@ struct Element: Codable {
     let id: String?
 }
 
-
-
-
+struct SwizzlingCommand: Codable {
+    let method: WebSocketMessageType
+    let path: String
+    let value: String
+}
 
 enum TestMessageType: String, Codable {
     case clientToServer, response
@@ -83,7 +85,7 @@ struct ClientToServerResponse: Codable {
 struct ShutdownMessage: Codable {
     let type = TestMessageType.disconnect
     let id: UUID?
-    let sentAt: Date? 
+    let sentAt: Date?
 }
 
 struct CommandExecutionResult: Codable {

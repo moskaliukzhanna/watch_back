@@ -20,6 +20,7 @@ class WebSocketController {
     let logger: Logger
     private let decoder = JSONDecoder()
     private let uuid = UUID()
+    private var connectionCount = 0
     // TODO: - remove those dummies later
     var commandsCount = 0
     
@@ -32,8 +33,10 @@ class WebSocketController {
     
     func connect(_ ws: WebSocket) {
         self.lock.withLockVoid {
-            //            self.sockets[uuid] = ws
+//                        self.sockets[uuid] = ws
+            connectionCount += 1
             self.sockets.append(ws)
+//            self.sockets[connectionCount] = ws
         }
         ws.onBinary { [weak self] ws, buffer in
             guard let self = self,
@@ -56,10 +59,17 @@ class WebSocketController {
         self.send(message: initialMessage, to: .socket(ws))
         
         // send test commands
-        testFindElement()
-        testTapButton()
-        testScrollDownTable()
-        testScrollUpTable()
+//        goToWristLocationButtonTapButton()
+//        changeWristLocation()
+//        testFindElement()
+//        testTapButton()
+//        testScrollDownTable()
+//        testScrollUpTable()
+        if connectionCount == 1 {
+            goToWristLocationButtonTapButton()
+        } else {
+            changeWristLocation()
+        }
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -109,7 +119,7 @@ class WebSocketController {
             
             print("Command executed with status \(status) : \(info)")
             // TODO: - remove this later
-            if let socket = sockets.first, commandsCount <= 2 {
+            if let socket = sockets.first {
                 let shutdownMessage = OutcomingMessage(method: .outcomingMessage, path: .shutdown)
 //                self.send(message: shutdownMessage, to: .socket(socket))
             }
@@ -119,6 +129,24 @@ class WebSocketController {
     }
 }
 extension WebSocketController {
+    
+    
+    private func goToWristLocationButtonTapButton() {
+        commandsCount += 1
+        guard let socket = sockets.first else { return }
+        
+        let data = Details(using: .id, value: "go_wristLocation")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .touch, data: data)
+        
+        send(message: outcommingMessage, to:  .socket(socket))
+    }
+    
+    private func changeWristLocation() {
+        guard let socket = sockets.last else { return }
+        
+        let message = SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right")
+        send(message: message, to: .socket(socket))
+    }
     
     private func testFindElement() {
         commandsCount += 1
