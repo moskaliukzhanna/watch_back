@@ -38,15 +38,29 @@ enum WatchError: Int, Codable {
     }
 }
 
+struct ResponseMessage: Codable {
+    let status: Int
+    let summary: String
+    let detail: String
+    let message: String
+    
+    
+}
+
 struct ExecutionResponse: Codable {
     
     let status: Int
     let summary: String
     let detail: String
     
+    
 //    init(status: WatchError) {
 //        self.summary = "\(status)"
 //        self.status = status.rawValue
 //        self.detail = status.descriprion
 //    }
+}
+
+struct SocketStatusResponse: Codable {
+    let message: ConnectionSource
 }

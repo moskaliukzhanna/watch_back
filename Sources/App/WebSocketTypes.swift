@@ -93,3 +93,8 @@ struct CommandExecutionResult: Codable {
     let command: Command
     let error: String?
 }
+
+enum ConnectionSource: String, Codable{
+    case joinedUI
+    case joinedSwizzler
+}
