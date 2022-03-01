@@ -24,6 +24,7 @@ final class WebSocketController {
     private let decoder = JSONDecoder()
     private lazy var timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
     private var connectionCount = 0
+    private var commandsArray = [Codable]()
     // TODO: - remove those dummies later
     var commandsCount = 0
     
@@ -66,14 +67,16 @@ final class WebSocketController {
         //        testTapButton()
         //        testScrollDownTable()
         //        testScrollUpTable()
-                if connectionCount == 1 {
-        send(message: initialMessage, to: .socket(ws))
-//        sendTestMessages(to: .joinedUI)
-        //            goToWristLocationButtonTapButton()
-                } else {
-        send(message: initialMessage, to: .socket(ws))
-        //            changeWristLocation(socket: socket)
-                }
+        if connectionCount == 1 {
+            send(message: initialMessage, to: .socket(ws))
+            //        sendTestMessages(to: .joinedUI)
+            //            goToWristLocationButtonTapButton()
+        } else {
+            send(message: initialMessage, to: .socket(ws))
+            //            changeWristLocation(socket: socket)
+        }
+        
+        
     }
     
     private func sendTestMessages(to source: ConnectionSource) {
@@ -85,18 +88,9 @@ final class WebSocketController {
         timer.schedule(deadline: .now() + .seconds(5), repeating: .seconds(0), leeway: .seconds(1))
         if #available(OSX 10.14.3,  *) {
             timer.activate()
-            goToWristLocationButtonTapButton()
-            changeWristLocation()
-            tapCheckWristLocation()
-        }
-    }
-    
-    private func executeMessageSend(to source: ConnectionSource) {
-        switch source {
-        case .joinedUI:
-            goToWristLocationButtonTapButton()
-        case .joinedSwizzler:
-            changeWristLocation()
+            for command in commandsArray {
+                executeCommand(message: command)
+            }
         }
     }
     
@@ -166,11 +160,25 @@ final class WebSocketController {
         }
         socketsUUIDDict[status] = embededDict
         print(socketsUUIDDict)
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "go_wristLocation")))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right"))
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "check_wristLocation")))
         sendTestMessages(to: status)
     }
 }
 
 extension WebSocketController {
+    fileprivate func executeCommand(message: Codable) {
+        commandsCount += 1
+        let source: ConnectionSource = message is OutcomingMessage ? .joinedUI : .joinedSwizzler
+        if message is OutcomingMessage {
+            send(message: message as! OutcomingMessage, for: source)
+        } else {
+            send(message: message as! SwizzlingCommand, for: source)
+        }
+    }
+    
+    
     private func goToWristLocationButtonTapButton() {
         commandsCount += 1
         
