@@ -75,8 +75,6 @@ final class WebSocketController {
             send(message: initialMessage, to: .socket(ws))
             //            changeWristLocation(socket: socket)
         }
-        
-        
     }
     
     private func sendTestMessages(to source: ConnectionSource) {
@@ -138,11 +136,13 @@ final class WebSocketController {
     }
     
     private func handleData(_ embededDict: [String: WebSocket], _ data: Data) {
-        if let executionResponse = decoder.decode(type: ExecutionResponse.self, data: data) as? ExecutionResponse {
+        if let executionResponse = decoder.decode(type: ExecutionResponse.self, data: data) {
             handleResponse(executionResponse)
-        } else if let messageResponse = decoder.decode(type: SocketStatusResponse.self, data: data) as? SocketStatusResponse {
+        }
+        if let messageResponse = decoder.decode(type: SocketStatusResponse.self, data: data) {
             handleResponse(messageResponse, embededDict: embededDict)
         }
+
     }
     
     private func handleResponse(_ response: ExecutionResponse) {
@@ -160,9 +160,13 @@ final class WebSocketController {
         }
         socketsUUIDDict[status] = embededDict
         print(socketsUUIDDict)
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "go_wristLocation")))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right"))
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "check_wristLocation")))
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 2)))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "go_wristLocation")))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right"))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "check_wristLocation")))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.getFrameworkValue"))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .shutdown, data: nil))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
         sendTestMessages(to: status)
     }
 }

@@ -15,6 +15,8 @@ enum WatchCommand: String, Codable {
     case screenshot = "/screenshot"
     case scrollTableDown = "/table/scroll/down"
     case scrollTableUp = "/table/scroll/up"
+    case pressHomeButton = "press/homebutton"
+    case launch = "/launch"
 }
 
 enum WebSocketMessageType: String, Codable {
@@ -47,7 +49,7 @@ struct Element: Codable {
 struct SwizzlingCommand: Codable {
     let method: WebSocketMessageType
     let path: String
-    let value: String
+    var value: String? = nil
 }
 
 enum TestMessageType: String, Codable {
@@ -92,9 +94,4 @@ struct CommandExecutionResult: Codable {
     var success: Bool
     let command: Command
     let error: String?
-}
-
-enum ConnectionSource: String, Codable{
-    case joinedUI
-    case joinedSwizzler
 }

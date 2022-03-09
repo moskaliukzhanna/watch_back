@@ -7,8 +7,6 @@
 
 import Foundation
 
-import Foundation
-
 enum WatchError: Int, Codable {
     case success = 0
     case unknownCommand
@@ -43,8 +41,6 @@ struct ResponseMessage: Codable {
     let summary: String
     let detail: String
     let message: String
-    
-    
 }
 
 struct ExecutionResponse: Codable {
@@ -63,4 +59,9 @@ struct ExecutionResponse: Codable {
 
 struct SocketStatusResponse: Codable {
     let message: ConnectionSource
+}
+
+enum ConnectionSource: String, Codable{
+    case joinedUI
+    case joinedSwizzler
 }
