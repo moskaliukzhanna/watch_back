@@ -51,4 +51,3 @@ struct Command: Codable {
 enum ElementType: UInt, Codable {
     case button = 0
 }
-

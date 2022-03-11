@@ -1,62 +1,103 @@
 //
 //  WebSocketController.swift
-//  
+//
 //
 //  Created by Zhanna Moskaliuk on 01.06.2021.
 //
 
 import Foundation
 import Vapor
+import Dispatch
 
 enum WebSocketSendOption {
-    case id(UUID), socket(WebSocket)
-    case all, ids([UUID])
+    //    case id(UUID), socket(WebSocket)
+    //    case all, ids([UUID])
+    case socket(WebSocket)
 }
 
-class WebSocketController {
+final class WebSocketController {
     let lock: Lock
-    var sockets: [UUID: WebSocket]
+    //    var socketsUUIDDict: [ConnectionSource: String] = [:]
+    var sockets: [String: WebSocket] = [:]
+    var socketsUUIDDict: [ConnectionSource: [String: WebSocket]] = [:]
     let logger: Logger
     private let decoder = JSONDecoder()
-    private let uuid = UUID()
-    // TODO: - switchesCount remove later
-    var switchesCount = 0
-    var tapCount = 0
-    var backTapCount = 0
+    private lazy var timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
+    private var connectionCount = 0
+    private var commandsArray = [Codable]()
+    // TODO: - remove those dummies later
+    var commandsCount = 0
+    var isSend = false
     
     init() {
         self.lock = Lock()
-        self.sockets = [:]
         self.logger = Logger(label: "WebSocketController")
     }
     
     func connect(_ ws: WebSocket) {
+        let uuid = UUID().uuidString
         self.lock.withLockVoid {
             self.sockets[uuid] = ws
+            logger.info("Connection #\(sockets.count)")
+            logger.info("WS :\(uuid) \(ws)")
         }
         ws.onBinary { [weak self] ws, buffer in
             guard let self = self,
                   let data = buffer.getData(
                     at: buffer.readerIndex, length: buffer.readableBytes) else {
-                return
-            }
+                        return
+                    }
             
-            self.onData(ws, data)
+            self.onData([uuid: ws], data)
         }
         ws.onText { [weak self] ws, text in
             guard let self = self,
                   let data = text.data(using: .utf8) else {
-                return
-            }
+                      return
+                  }
             
-            self.onData(ws, data)
+            self.onData([uuid: ws], data)
         }
-        self.send(message: TestMessageHandshake(id: uuid), to: .socket(ws))
-        self.switchesCount = 0
-        // send test commands
-        self.tapAndWait(id: "table_button")
-        tapCount = 0
-        backTapCount = 0
+        
+        // Send initial message to track handshake was established
+        let initialMessage = OutcomingMessage(method: .outcomingMessage, path: .initial, data: nil)
+        send(message: initialMessage, to: .socket(ws))
+        
+        // Send test messages after all connections have been established or after delay
+        let timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            if !self.isSend {
+            self.sendTestMessages()
+            self.isSend = true
+            }
+            timer.cancel()
+        }
+        timer.schedule(deadline: .now() + 40, repeating: .seconds(0), leeway: .seconds(0))
+        if #available(OSX 10.14.3,  *) {
+            timer.activate()
+            
+        }
+    }
+    
+    private func sendTestMessages() {
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "Bellyrubs")))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 0)))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .longPress))
+        
+        
+        commandsArray.forEach { command in
+            executeCommand(message: command)
+        }
+    }
+    
+    func send<T: Codable>(message: T, for source: ConnectionSource) {
+        guard let socketDict = socketsUUIDDict[source], let socket = socketDict.first?.value else {
+            logger.info("Failed to fetch Web Socket:\(source)")
+            return
+        }
+        send(message: message, to: .socket(socket))
     }
     
     func send<T: Codable>(message: T, to sendOption: WebSocketSendOption) {
@@ -64,14 +105,17 @@ class WebSocketController {
         do {
             let sockets: [WebSocket] = self.lock.withLock {
                 switch sendOption {
-                case .id(let id):
-                    return [self.sockets[id]].compactMap { $0 }
+                    //                case .id(let id):
+                    //                    return [self.sockets[id]].compactMap { $0 }
+                    //                break
                 case .socket(let socket):
                     return [socket]
-                case .all:
-                    return self.sockets.values.map { $0 }
-                case .ids(let ids):
-                    return self.sockets.filter { key, _ in ids.contains(key) }.map { $1 }
+                    //                case .all:
+                    //                    return self.sockets.values.map { $0 }
+                    //                break
+                    //                case .ids(let ids):
+                    //                    return self.sockets.filter { key, _ in ids.contains(key) }.map { $1 }
+                    //                break
                 }
             }
             let encoder = JSONEncoder()
@@ -85,191 +129,108 @@ class WebSocketController {
         }
     }
     
-    private func onData(_ ws: WebSocket, _ data: Data) {
+    private func onData(_ embededDict: [String: WebSocket], _ data: Data) {
         self.logger.info("\(String(data: data, encoding: .utf8) ?? "Malformed data")")
         
-        do {
-            try handleData(data: data)
-        } catch {
-            print("Failed to handle data with error: \(error.localizedDescription)")
+        handleData(embededDict, data)
+    }
+    
+    private func handleData(_ embededDict: [String: WebSocket], _ data: Data) {
+        if let executionResponse = decoder.decode(type: ExecutionResponse.self, data: data) {
+            handleResponse(executionResponse)
+        }
+        if let messageResponse = decoder.decode(type: SocketStatusResponse.self, data: data) {
+            handleResponse(messageResponse, embededDict: embededDict)
         }
     }
     
-    private func handleData(data: Data) throws {
-        let messageFromClient = try decoder.decode(TestMessageSinData.self, from: data)
+    private func handleResponse(_ response: ExecutionResponse) {
+        let status = response.status
+        let info = response.detail
         
-        switch messageFromClient.type {
-        case .response:
-            try handleClientResponse(data: data)
-        default:
-            break
-        }
+        print("Command executed with status \(status) : \(info)")
     }
     
-    private func handleClientResponse(data: Data) throws {
-        let responseFromClient = try decoder.decode(ClientToServerResponse.self, from: data)
-        let response = responseFromClient.response
-        let command = response.command
+    private func handleResponse(_ response: SocketStatusResponse, embededDict: [String: WebSocket]) {
+        let status = response.message
         
-        if response.success {
-            print("Command \(command.commandType) with id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") executed successfully")
-            // DELETE LATER
-            // ONLY FOR TESTING
-            // run test commands when previous one is finished
-            switch command.commandType {
-//            case .staticTextExists:
-//                tapAndWait(id: "second_button")
-            case .tapAndWait:
-                if tapCount < 2 {
-                scrollTableDownForStaticTextCell(text: "23.11.2019.")
-                tapCount += 1
-                } else if tapCount < 3 {
-                    tapBackButton()
-                    backTapCount += 1
-                } else if command.identification?.elementIdentification ==  "goToColorButton" {
-                    swipeDown(text: "Yellow")
-                }
-            case .tableStaticTextCellScrollDown:
-                scrollTableUpForStaticTextCell(text: "23.10.2020.")
-            case .tableStaticTextCellScrollUp:
-                tapAndWait(text: "23.10.2020.")
-                tapCount += 1
-            case .tapBackButton:
-                if backTapCount < 2 {
-                tapBackButton()
-                backTapCount += 1
-                } else {
-                    tapAndWait(id: "goToColorButton")
-                    tapCount += 1
-                }
-                
-//                sendIsEnabled()
-//            case .isEnabled:
-//                tapAndWait(id: "start_button")
-//            case .tapAndWait:
-//                makeTestElementScreenshot(id: "catImage")
-//            case .makesreenshot:
-//                if switchesCount < 4 {
-//                    sendSwitch()
-//                } else {
-//                    sendDisconnect()
-//                }
-//            case .switchValue:
-//                // switch back a few times
-//                if switchesCount < 4 {
-//                    sendSwitch()
-//                } else {
-//                    tapBackButton()
-//                }
-//            case .elementSreenshot:
-//                sendDisconnect()
-            default:
-                break
-            }
+        if socketsUUIDDict.keys.contains(status) {
+            socketsUUIDDict.removeValue(forKey: status)
         }
-        if let error = response.error, let commandError = CommandExecutionError(rawValue: error) {
-            print("Failed to execute command \(command.commandType) of id: \((command.identification?.elementIdentification ?? command.identification?.staticText) ?? "") with error: \(commandError.errorDescriprion)")
+        socketsUUIDDict[status] = embededDict
+        print(socketsUUIDDict)
+    }
+}
+
+extension WebSocketController {
+    fileprivate func executeCommand(message: Codable) {
+        commandsCount += 1
+        let source: ConnectionSource = message is OutcomingMessage ? .joinedUI : .joinedSwizzler
+        if message is OutcomingMessage {
+            send(message: message as! OutcomingMessage, for: source)
+        } else {
+            send(message: message as! SwizzlingCommand, for: source)
         }
     }
     
-    private func sendTestTap() {
-        // tap on "Start" button, it should take us to the next screen
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tap, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    
+    private func goToWristLocationButtonTapButton() {
+        commandsCount += 1
+        
+        let data = Details(using: .id, value: "go_wristLocation")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .touch, data: data)
+        
+        send(message: outcommingMessage, for: .joinedUI)
     }
     
-    private func makeTestScreenshot() {
-        guard let socket = sockets[uuid] else { return }
-        // Make screenshot on the next screen
-        let command = Command(commandType: .makesreenshot, waitTimeout: 2)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    private func changeWristLocation() {
+        
+        let message = SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right")
+        send(message: message, for: .joinedSwizzler)
     }
     
-    private func makeTestElementScreenshot(id: String) {
-        guard let socket = sockets[uuid] else { return }
-        // Make screenshot on the next screen
-        let command = Command(commandType: .elementSreenshot, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: id), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    private func tapCheckWristLocation() {
+        commandsCount += 1
+        
+        let data = Details(using: .id, value: "check_wristLocation")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .touch, data: data)
+        
+        send(message: outcommingMessage, for: .joinedUI)
     }
     
-    private func tapAndWait(id: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: id), waitTimeout: 3)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    private func testFindElement() {
+        commandsCount += 1
+        
+        let data = Details(using: .id, value: "goToColorButton")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .element, data: data)
+        
+        send(message: outcommingMessage, for: .joinedUI)
     }
     
-    private func tapAndWait(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapAndWait, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    private func testTapButton() {
+        commandsCount += 1
+        
+        let data = Details(using: .id, value: "table_button")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .touch, data: data)
+        
+        send(message: outcommingMessage, for: .joinedUI)
     }
     
-    private func sendIsEnabled() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .isEnabled, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "start_button"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
+    private func testScrollDownTable() {
+        commandsCount += 1
+        
+        let data = Details(using: .text, value: "21.11.2019.")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: data)
+        
+        send(message: outcommingMessage, for: .joinedUI)
     }
     
-    private func staticTextExists() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .staticTextExists, identificationType: .staticText, identification: ElementIdentification(staticText: "Hello there!"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func sendSwitch() {
-        switchesCount += 1
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .switchValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "catSwitch"))
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func tapBackButton() {
-        // now go back to the main screen
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tapBackButton, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "BackButton"), waitTimeout: 3)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-//    private func swipeLeft() {
-//        guard let socket = sockets[uuid] else { return }
-//        let command = Command(commandType: .swipeLeft, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "swipe_group"), waitTimeout: 0)
-//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-//    }
-//    
-//    private func pickerSetValue() {
-//        guard let socket = sockets[uuid] else { return }
-//        let command = Command(commandType: .setPicketValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_picker"), waitTimeout: 0)
-//        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-//    }
-//    
-    private func scrollTableDownForStaticTextCell(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tableStaticTextCellScrollDown, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func scrollTableUpForStaticTextCell(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .tableStaticTextCellScrollUp, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func swipeDown(text: String) {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .swipeDown, identificationType: .staticText, identification: ElementIdentification(staticText: text), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func testSetSliderValue() {
-        guard let socket = sockets[uuid] else { return }
-        let command = Command(commandType: .setSliderValue, identificationType: .accessibilityId, identification: ElementIdentification(elementIdentification: "test_slider"), waitTimeout: 0)
-        self.send(message: ServerToClientMessage(id: uuid, command: command, createdAt: Date()), to: .socket(socket))
-    }
-    
-    private func sendDisconnect() {
-        guard let socket = sockets[uuid] else { return }
-        // send shutdown message to the client
-        self.send(message: ShutdownMessage(id: uuid, sentAt: Date()), to: .socket(socket))
+    private func testScrollUpTable() {
+        commandsCount += 1
+        
+        let data = Details(using: .text, value: "23.10.2020.")
+        let outcommingMessage = OutcomingMessage(method: .outcomingMessage, path: .scrollTableUp, data: data)
+        
+        send(message: outcommingMessage, for: .joinedUI)
     }
 }
