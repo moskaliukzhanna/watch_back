@@ -20,10 +20,4 @@ struct TestController: RouteCollection {
     func webSocket(req: Request, socket: WebSocket) {
         self.wsController.connect(socket)
     }
-    
-//    func onTestMessageReceinved(_ ws: WebSocket, _ id: UUID, _ message: ClientToServerMessage) {
-//
-//
-//    }
-    
 }

@@ -1,6 +1,6 @@
 //
 //  WebSocketController.swift
-//  
+//
 //
 //  Created by Zhanna Moskaliuk on 01.06.2021.
 //
@@ -27,6 +27,7 @@ final class WebSocketController {
     private var commandsArray = [Codable]()
     // TODO: - remove those dummies later
     var commandsCount = 0
+    var isSend = false
     
     init() {
         self.lock = Lock()
@@ -57,38 +58,37 @@ final class WebSocketController {
             
             self.onData([uuid: ws], data)
         }
+        
+        // Send initial message to track handshake was established
         let initialMessage = OutcomingMessage(method: .outcomingMessage, path: .initial, data: nil)
+        send(message: initialMessage, to: .socket(ws))
         
-        
-        // send test commands
-        //        goToWristLocationButtonTapButton()
-        //        changeWristLocation()
-        //        testFindElement()
-        //        testTapButton()
-        //        testScrollDownTable()
-        //        testScrollUpTable()
-        if connectionCount == 1 {
-            send(message: initialMessage, to: .socket(ws))
-            //        sendTestMessages(to: .joinedUI)
-            //            goToWristLocationButtonTapButton()
-        } else {
-            send(message: initialMessage, to: .socket(ws))
-            //            changeWristLocation(socket: socket)
+        // Send test messages after all connections have been established or after delay
+        let timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
+        timer.setEventHandler { [weak self] in
+            guard let self = self else { return }
+            if !self.isSend {
+            self.sendTestMessages()
+            self.isSend = true
+            }
+            timer.cancel()
+        }
+        timer.schedule(deadline: .now() + 40, repeating: .seconds(0), leeway: .seconds(0))
+        if #available(OSX 10.14.3,  *) {
+            timer.activate()
+            
         }
     }
     
-    private func sendTestMessages(to source: ConnectionSource) {
-        timer.setEventHandler { [weak self] in
-            guard let self = self else { return }
-            
-            self.timer.cancel()
-        }
-        timer.schedule(deadline: .now() + .seconds(5), repeating: .seconds(0), leeway: .seconds(1))
-        if #available(OSX 10.14.3,  *) {
-            timer.activate()
-            for command in commandsArray {
-                executeCommand(message: command)
-            }
+    private func sendTestMessages() {
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "Bellyrubs")))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 0)))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .longPress))
+        
+        
+        commandsArray.forEach { command in
+            executeCommand(message: command)
         }
     }
     
@@ -142,7 +142,6 @@ final class WebSocketController {
         if let messageResponse = decoder.decode(type: SocketStatusResponse.self, data: data) {
             handleResponse(messageResponse, embededDict: embededDict)
         }
-
     }
     
     private func handleResponse(_ response: ExecutionResponse) {
@@ -160,14 +159,6 @@ final class WebSocketController {
         }
         socketsUUIDDict[status] = embededDict
         print(socketsUUIDDict)
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 2)))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "go_wristLocation")))
-//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right"))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "check_wristLocation")))
-//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.getFrameworkValue"))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .shutdown, data: nil))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
-        sendTestMessages(to: status)
     }
 }
 
@@ -243,6 +234,3 @@ extension WebSocketController {
         send(message: outcommingMessage, for: .joinedUI)
     }
 }
-
-
-

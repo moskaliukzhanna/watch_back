@@ -17,6 +17,7 @@ enum WatchCommand: String, Codable {
     case scrollTableUp = "/table/scroll/up"
     case pressHomeButton = "press/homebutton"
     case launch = "/launch"
+    case longPress = "/longPress"
 }
 
 enum WebSocketMessageType: String, Codable {
