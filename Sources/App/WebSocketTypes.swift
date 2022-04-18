@@ -6,12 +6,16 @@
 //
 
 import Foundation
+import Vapor
 
 enum WatchCommand: String, Codable {
     case initial = "/init"
     case shutdown = "/shutdown"
     case element = "/element"
     case touch = "/touch/click"
+    case text = "/text"
+    case textColor = "/text/color"
+    case complicationTap = "complication/tap"
     case screenshot = "/screenshot"
     case scrollTableDown = "/table/scroll/down"
     case scrollTableUp = "/table/scroll/up"
@@ -35,12 +39,22 @@ struct Details: Codable {
     var element: Element? = nil
     var timeout: Int? = nil
     var using: Identification? = nil
+    var coordinates: Coordinates? = nil
     var value: String? = nil
+    var pressDuration: Double? = nil
 }
 
 enum Identification: String, Codable {
     case id = "id"
     case text = "text"
+    case coordinates = "coordinates"
+}
+
+struct Coordinates: Codable {
+    let x1: Int?
+    let y1: Int?
+    var x2: Int? = nil
+    var y2: Int? = nil
 }
 
 struct Element: Codable {
