@@ -25,8 +25,8 @@ enum WatchCommand: String, Codable {
 }
 
 enum WebSocketMessageType: String, Codable {
-    case outcomingMessage = "/POST" // server ---> client
-    case incomingMessage = "/GET" // client ---> server
+    case outcomingMessage = "POST" // server ---> client
+    case incomingMessage = "GET" // client ---> server
 }
 
 struct OutcomingMessage: Codable {

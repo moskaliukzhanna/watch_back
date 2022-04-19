@@ -84,23 +84,13 @@ final class WebSocketController {
     
     private func sendTestMessages() {
         commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 0)))
-//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.requestAuthorization.setState", value: "true"))
-//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.requestAuthorization.callback", value: "true"))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .textColor, data: Details(using: .id, value: "table_button")))
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "table_button")))
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 373))))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 373))))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .longPress, data: Details(using: .coordinates, coordinates: Coordinates(x1: 98, y1: 50), pressDuration: 3.0)))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .complicationTap, data: Details(using: .id, value: "Bellyrubs")))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
 //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "table_button")))
 //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 373))))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollTableUp, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 200))))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 700))))
-//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.batteryState.setTestValue", value: "charging"))
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton))
         
+        
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.setState", value: "true"))
+        
+               
         commandsArray.forEach { command in
             executeCommand(message: command)
         }
