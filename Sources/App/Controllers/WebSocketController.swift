@@ -87,10 +87,17 @@ final class WebSocketController {
 //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "table_button")))
 //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 373))))
         
+        // Request authorization
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
         
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.setState", value: "true"))
+        // Get notifications settings
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationSettings.setState", passthrough: AnyCodable(value: true)))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationSettings.callback", callbackId: "1234"))
         
-               
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.getNotificationSettings.call"))
+        
+        
         commandsArray.forEach { command in
             executeCommand(message: command)
         }
@@ -189,7 +196,7 @@ extension WebSocketController {
     
     private func changeWristLocation() {
         
-        let message = SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: "right")
+        let message = SwizzlingCommand(method: .outcomingMessage, path: "interfaceDevice.wristLocation.setTestValue", value: AnyCodable(value: "right"))
         send(message: message, for: .joinedSwizzler)
     }
     
