@@ -62,22 +62,22 @@ final class WebSocketController {
         // Send initial message to track handshake was established
         let initialMessage = OutcomingMessage(method: .outcomingMessage, path: .initial, data: nil)
         send(message: initialMessage, to: .socket(ws))
-        
+        sendTestMessages()
         // Send test messages after all connections have been established or after delay
-        let timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
-        timer.setEventHandler { [weak self] in
-            guard let self = self else { return }
-            if !self.isSend {
-            self.sendTestMessages()
-            self.isSend = true
-            }
-            timer.cancel()
-        }
-        timer.schedule(deadline: .now() + 20, repeating: .seconds(0), leeway: .seconds(0))
-        if #available(OSX 10.14.3,  *) {
-            timer.activate()
-            
-        }
+//        let timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
+//        timer.setEventHandler { [weak self] in
+//            guard let self = self else { return }
+//            if !self.isSend {
+//            self.sendTestMessages()
+//            self.isSend = true
+//            }
+//            timer.cancel()
+//        }
+//        timer.schedule(deadline: .now() + 20, repeating: .seconds(0), leeway: .seconds(0))
+//        if #available(OSX 10.14.3,  *) {
+//            timer.activate()
+//
+//        }
     }
     
     // "userNotificationCenter.requestAuthorization.setState"
@@ -89,19 +89,43 @@ final class WebSocketController {
         
         // Request authorization
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound, .provisional]))
         
         // Get notifications settings
 //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationSettings.setState", passthrough: AnyCodable(value: true)))
 //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationSettings.callback", callbackId: "1234"))
         
-//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.getNotificationSettings.call"))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.getNotificationSettings.call", callbackId: "1234"))
         
         
-        commandsArray.forEach { command in
-            executeCommand(message: command)
+//        commandsArray.forEach { command in
+//            executeCommand(message: command)
+//        }
+        
+//        let timer: DispatchSourceTimer = DispatchSource.makeTimerSource()
+//        timer.setEventHandler { [weak self] in
+//            guard let self = self else { return }
+//            if !self.isSend {
+//            self.sendTestMessages()
+//            self.isSend = true
+//            }
+//            timer.cancel()
+//        }
+//        timer.schedule(deadline: .now() + 20, repeating: .seconds(0), leeway: .seconds(0))
+//        if #available(OSX 10.14.3,  *) {
+//            timer.activate()
+//
+//        }
+        
+        Task {
+            for command in commandsArray {
+                try await Task.sleep(nanoseconds: 10000000000)
+                executeCommand(message: command)
+            }
         }
     }
+    
+    
     
     func send<T: Codable>(message: T, for source: ConnectionSource) {
         guard let socketDict = socketsUUIDDict[source], let socket = socketDict.first?.value else {

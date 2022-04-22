@@ -62,17 +62,24 @@ struct Element: Codable {
 }
 
 struct SwizzlingCommand: Codable {
-    let method: WebSocketMessageType
-    let path: String
+    var method: WebSocketMessageType
+    var path: String
     var value: AnyCodable? = nil
+    
+    
     var callbackId: String? = nil
     var passthrough: AnyCodable? = nil
+    var granted: AnyCodable? = nil
     var options: Set<NotificationOptions>? = nil
-    var notificationSettings: AuthorizationStatus? = nil
+    var notificationSettings: NotificationStatus? = nil
+}
+
+struct NotificationStatus: Codable {
+    var authorizationStatus: AuthorizationStatus? = nil
 }
 
 enum NotificationOptions: String, Codable {
-    case alert, sound, badge
+    case alert, sound, badge, provisional
 }
 
 enum AuthorizationStatus: String, Codable {
