@@ -72,6 +72,12 @@ struct SwizzlingCommand: Codable {
     var granted: AnyCodable? = nil
     var options: Set<NotificationOptions>? = nil
     var notificationSettings: NotificationStatus? = nil
+    var requestId: String? = nil
+    var categories: [NotificationCategory]? = nil
+    var notificationRequest: NotificationRequest? = nil
+    var notification: Notification? = nil
+    var response: NotificationResponse? = nil
+    var identifiers: [String]? = nil
 }
 
 struct NotificationStatus: Codable {
@@ -84,6 +90,37 @@ enum NotificationOptions: String, Codable {
 
 enum AuthorizationStatus: String, Codable {
     case notDetermined, denied, authorized, provisional
+}
+
+struct NotificationCategory: Hashable, Codable {
+    let identifier: String
+    let actions: Set<NotificationAction>
+}
+
+struct NotificationAction: Hashable, Codable {
+    let identifier: String
+    let title: String
+}
+
+struct NotificationRequest: Codable {
+    let identifier: String
+    let title: String
+    let body: String
+    let categoryIdentifier: String
+    let triggerTimeInterval: TimeInterval?
+}
+
+struct Notification: Codable {
+    let identifier: String
+    let title: String
+    let body: String
+    let categoryIdentifier: String
+    let deliveryDate: Int?
+}
+
+struct NotificationResponse: Codable {
+    let actionIdentifier: String
+    let notificationIdentifier: String
 }
 
 enum TestMessageType: String, Codable {
