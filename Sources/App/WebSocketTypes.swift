@@ -13,6 +13,7 @@ enum WatchCommand: String, Codable {
     case shutdown = "/shutdown"
     case element = "/element"
     case touch = "/touch/click"
+    case alertTap = "/alert/click"
     case text = "/text"
     case textColor = "/text/color"
     case complicationTap = "complication/tap"

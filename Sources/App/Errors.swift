@@ -62,6 +62,6 @@ struct SocketStatusResponse: Codable {
 }
 
 enum ConnectionSource: String, Codable{
-    case joinedUI
-    case joinedSwizzler
+    case joinedUI = "ui_connect"
+    case joinedSwizzler = "swizzling_connect"
 }
