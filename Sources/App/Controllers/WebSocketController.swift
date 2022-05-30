@@ -63,98 +63,43 @@ final class WebSocketController {
     
     private func sendTestMessages() {
         commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 0)))
-        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "table_button")))
-        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollTableDown, data: Details(using: .coordinates, coordinates: Coordinates(x1: 180, y1: 373))))
         
         // Request authorization
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
-        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, data: Details(using: .text, value: "Allow")))
         
-        // Get notifications settings
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationSettings.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationSettings.callback", callbackId: "1234"))
+//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollSystemAlertToElement, data: Details(using: .text, value: "Allow")))
         
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.getNotificationSettings.call", callbackId: "1234"))
-        //
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, data: Details(using: .text, value: "Allow")))
+        
+        // Supports content extensions
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.supportsContentExtensions.setTestValue", value: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.supportsContentExtensions.getTestFrameworkValue"))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.supportsContentExtensions.getTestFrameworkValue", timeout: 3.0))
+        
         // Set Coffe category
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.call", categories:
                                                 [NotificationCategory(identifier: "CoffeCategory",
                                                                       actions: [NotificationAction(identifier: "Grabcoffe", title: "Do you want another coffe :)")])]))
-        
-        
-        
-        // Check categories which was set on the Watch
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationCategories.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getNotificationCategories.call"))
-        
         // Add notitfication request - Coffe
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "CoffeTime", title: "Hey, it's coffe time", body: "Quick, grab your coffe", categoryIdentifier: "CoffeCategory", triggerTimeInterval: 10.0)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "CoffeTime", title: "Hey, it's coffe time", body: "Quick, grab your coffe", categoryIdentifier: "CoffeCategory", triggerTimeInterval: 0.5)))
+        
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, timeout: 5.0, data: Details(using: .text, value: "Do you want another coffe :)")))
         
         // Set Tea category
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.call", categories:
-                                                [NotificationCategory(identifier: "TeaCategory",
-                                                                      actions: [NotificationAction(identifier: "TakeTea", title: "Take a tea break"),
-                                                                                NotificationAction(identifier: "TakeCoffe", title: "More coffe??? That's not healthy")])]))
+          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
+          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.call", categories:
+                                                  [NotificationCategory(identifier: "TeaCategory",
+                                                                        actions: [NotificationAction(identifier: "TakeTea", title: "Take a tea break"),
+                                                                                  NotificationAction(identifier: "TakeCoffe", title: "More coffe??? That's not healthy")])]))
+  
+           // Add notitfication request - Tea
+          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
+          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "TeaTime", title: "Tea Break", body: "It is time for tea", categoryIdentifier: "TeaCategory", triggerTimeInterval: 1.0)))
         
-        // Add notitfication request - Tea
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "TeaTime", title: "Tea Break", body: "It is time for tea", categoryIdentifier: "TeaCategory", triggerTimeInterval: 20.0)))
-        
-        // Make sreenshot
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .screenshot))
-        
-        
-        // Set drinking Category
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "userNotificationCenter.setNotificationCategories.call", categories:
-                                                [NotificationCategory(identifier: "DrinkingCategory",
-                                                                      actions: [NotificationAction(identifier: "TakeWater", title: "Are you drinking water?"),
-                                                                                NotificationAction(identifier: "TakeJuice", title: "Are you drining juice?"),
-                                                                                NotificationAction(identifier: "No", title: "No? Skip")])]))
-        
-        // Add notitfication request - Water
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "DrinkTime", title: "It is time to hydralyte", body: "", categoryIdentifier: "DrinkingCategory", triggerTimeInterval: 10.0)))
-        
-        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, data: Details(using: .text, value: "Do you want another coffe :)")))
-        
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getPendingNotificationRequests.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:   "userNotificationCenter.getPendingNotificationRequests.call"))
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.removePendingNotificationRequests.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:   "userNotificationCenter.removePendingNotificationRequests.call", identifiers: ["CoffeTime"]))
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.removeAllPendingNotificationRequests.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:   "userNotificationCenter.removeAllPendingNotificationRequests.call"))
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getPendingNotificationRequests.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:   "userNotificationCenter.getPendingNotificationRequests.call"))
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getDeliveredNotifications.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getDeliveredNotifications.call"))
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.removeDeliveredNotifications.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.removeAllDeliveredNotifications.call"))
-        
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getDeliveredNotifications.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.getDeliveredNotifications.call"))
-        
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.delegate.willPresentNotification.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.delegate.willPresentNotification.call", notification: Notification(identifier: "CoffeTime", title: "Hey, it's coffe time", body: "Quick, grab your coffe", categoryIdentifier: "Grab coffe", deliveryDate: 10000)))
-        //
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.delegate.didReceiveResponse.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.delegate.didReceiveResponse.call", response: NotificationResponse(actionIdentifier: "Grab coffe", notificationIdentifier: "CoffeTime")))
-        ////
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:   "userNotificationCenter.delegate.openSettingsForNotifications.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.delegate.openSettingsForNotification.call", notification: Notification(identifier: "CoffeTime", title: "Hey, it's coffe time", body: "Quick, grab your coffe", categoryIdentifier: "Grab coffe", deliveryDate: 10000)))
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, timeout: 7.0, data: Details(using: .text, value: "TakeCoffe")))
+
         
         Task {
             for command in commandsArray {
@@ -177,17 +122,9 @@ final class WebSocketController {
         do {
             let sockets: [WebSocket] = self.lock.withLock {
                 switch sendOption {
-                    //                case .id(let id):
-                    //                    return [self.sockets[id]].compactMap { $0 }
-                    //                break
+                    
                 case .socket(let socket):
                     return [socket]
-                    //                case .all:
-                    //                    return self.sockets.values.map { $0 }
-                    //                break
-                    //                case .ids(let ids):
-                    //                    return self.sockets.filter { key, _ in ids.contains(key) }.map { $1 }
-                    //                break
                 }
             }
             let encoder = JSONEncoder()

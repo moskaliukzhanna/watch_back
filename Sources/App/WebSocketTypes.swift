@@ -21,6 +21,7 @@ enum WatchCommand: String, Codable {
     case scrollTableDown = "/table/scroll/down"
     case scrollTableUp = "/table/scroll/up"
     case pressHomeButton = "press/homebutton"
+    case scrollSystemAlertToElement = "/systemAlert/scroll/element"
     case launch = "/launch"
     case longPress = "/longPress"
 }
@@ -33,6 +34,7 @@ enum WebSocketMessageType: String, Codable {
 struct OutcomingMessage: Codable {
     let method: WebSocketMessageType
     let path: WatchCommand
+    var timeout: Double? = nil
     var data: Details? = nil
 }
 
@@ -65,6 +67,7 @@ struct Element: Codable {
 struct SwizzlingCommand: Codable {
     var method: WebSocketMessageType
     var path: String
+    var timeout: Double? = nil
     var value: AnyCodable? = nil
     
     
