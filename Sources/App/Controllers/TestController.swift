@@ -13,7 +13,7 @@ struct TestController: RouteCollection {
     
     func boot(routes: RoutesBuilder) throws {
         // provide
-        routes.webSocket("socket", onUpgrade: self.webSocket)
+        routes.webSocket("socket", maxFrameSize: .init(integerLiteral: 700000), onUpgrade: self.webSocket)
         
     }
    
