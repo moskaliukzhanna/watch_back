@@ -50,7 +50,7 @@ struct ExecutionResponse: Codable {
     let detail: String
 }
 
-enum ConnectionSource: Decodable {
+enum ConnectionSource: String, Decodable {
     case ui_connect
     case swizzling_connect
 }

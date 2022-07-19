@@ -47,12 +47,11 @@ final class WebSocketController {
             self.onData([uuid: ws], data)
         }
         ws.onText { [weak self] ws, text in
-            guard let self = self,
-                  let data = text.data(using: .utf8) else {
+            guard let self = self else {
                 return
             }
             
-            self.onData([uuid: ws], data)
+            self.onText([uuid: ws], text)
         }
         
         // Send initial message to track handshake was established
@@ -64,19 +63,19 @@ final class WebSocketController {
         commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 0)))
         //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton, data: Details(timeout: 2)))
         // Request authorization
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
-        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
+                commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
+                commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
         commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "go_wristLocation")))
         
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionAvailable.setTestValue", value: AnyCodable(value: true)))
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerAvailable.setTestValue", value: AnyCodable(value: true)))
         commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerAvailable.getTestFrameworkValue", value: AnyCodable(value: true)))
-        
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionActive.setTestValue", value: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerActive.setTestValue", value: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotionUpdateInterval.setTestValue", value: AnyCodable(value: 2.0)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionAvailable.getFrameworkValue"))
-        //
+//
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionActive.setTestValue", value: AnyCodable(value: true)))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerActive.setTestValue", value: AnyCodable(value: true)))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotionUpdateInterval.setTestValue", value: AnyCodable(value: 2.0)))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionAvailable.getFrameworkValue"))
+//        //
         ////        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.startDeviceMotionUpdatesWithHandler.setState", passthrough: AnyCodable(value: true)))
         ////        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startDeviceMotionUpdatesWithHandler.call"))
         //
@@ -109,25 +108,25 @@ final class WebSocketController {
         //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotion.getFrameworkValue"))
         //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotion.getTestFrameworkValue"))
         
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.accelerometerUpdateInterval.setTestValue", value: AnyCodable(value: 2.0)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerUpdateInterval.getTestFrameworkValue"))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerUpdateInterval.getFrameworkValue"))
-        
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startAccelerometerUpdates.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startAccelerometerUpdates.call"))
-        
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.setTestValue", value: AnyCodable(value:
-                                                                                                                                                    [
-                                                                                                                                                        "acceleration": [
-                                                                                                                                                            "x": 2.5,
-                                                                                                                                                            "y": 0.5,
-                                                                                                                                                            "z": 3.5
-                                                                                                                                                        ],
-                                                                                                                                                        "timestamp": 1581351985])))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.getTestFrameworkValue"))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.getFrameworkValue"))
-        
-        //
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.accelerometerUpdateInterval.setTestValue", value: AnyCodable(value: 2.0)))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerUpdateInterval.getTestFrameworkValue"))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerUpdateInterval.getFrameworkValue"))
+//
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startAccelerometerUpdates.setState", passthrough: AnyCodable(value: true)))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startAccelerometerUpdates.call"))
+//
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.setTestValue", value: AnyCodable(value:
+//                                                                                                                                                    [
+//                                                                                                                                                        "acceleration": [
+//                                                                                                                                                            "x": 2.5,
+//                                                                                                                                                            "y": 0.5,
+//                                                                                                                                                            "z": 3.5
+//                                                                                                                                                        ],
+//                                                                                                                                                        "timestamp": 1581351985])))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.getTestFrameworkValue"))
+//        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.getFrameworkValue"))
+//
+//        //
         //
         //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, data: Details(using: .text, value: "Allow")))
         //
@@ -202,18 +201,22 @@ final class WebSocketController {
     
     private func onData(_ embededDict: [String: WebSocket], _ data: Data) {
         self.logger.info("\(String(data: data, encoding: .utf8) ?? "Malformed data")")
-        
         handleData(embededDict, data)
     }
     
-    
+    private func onText(_ embededDict: [String: WebSocket], _ text: String) {
+        self.logger.info("\(text)")
+        handleText(embededDict, text)
+    }
     
     private func handleData(_ embededDict: [String: WebSocket], _ data: Data) {
         if let executionResponse = decoder.decode(type: ExecutionResponse.self, data: data) {
             handleResponse(executionResponse)
         }
-        if let messageResponse = decoder.decode(type: ConnectionSource.self, data: data) {
-            
+    }
+    
+    private func handleText(_ embededDict: [String: WebSocket], _ text: String) {
+        if let messageResponse = ConnectionSource(rawValue: text) {
             handleResponse(messageResponse, embededDict: embededDict)
         }
     }
