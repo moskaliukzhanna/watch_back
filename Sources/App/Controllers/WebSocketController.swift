@@ -44,7 +44,6 @@ final class WebSocketController {
                     at: buffer.readerIndex, length: buffer.readableBytes) else {
                 return
             }
-            
             self.onData([uuid: ws], data)
         }
         ws.onText { [weak self] ws, text in
@@ -63,43 +62,106 @@ final class WebSocketController {
     
     private func sendTestMessages() {
         commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .launch, data: Details(timeout: 0)))
-        
+        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .pressHomeButton, data: Details(timeout: 2)))
         // Request authorization
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.requestAuthorization.setState", passthrough: AnyCodable(value: true)))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.requestAuthorization.call", options: [.alert, .badge, .sound]))
+        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .touch, data: Details(using: .id, value: "go_wristLocation")))
         
-//        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .scrollSystemAlertToElement, data: Details(using: .text, value: "Allow")))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionAvailable.setTestValue", value: AnyCodable(value: true)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerAvailable.setTestValue", value: AnyCodable(value: true)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerAvailable.getTestFrameworkValue", value: AnyCodable(value: true)))
         
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, data: Details(using: .text, value: "Allow")))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionActive.setTestValue", value: AnyCodable(value: true)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isAccelerometerActive.setTestValue", value: AnyCodable(value: true)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotionUpdateInterval.setTestValue", value: AnyCodable(value: 2.0)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.isDeviceMotionAvailable.getFrameworkValue"))
+        //
+        ////        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.startDeviceMotionUpdatesWithHandler.setState", passthrough: AnyCodable(value: true)))
+        ////        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startDeviceMotionUpdatesWithHandler.call"))
+        //
         
-        // Supports content extensions
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.supportsContentExtensions.setTestValue", value: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.supportsContentExtensions.getTestFrameworkValue", timeout: 3.0))
+        //
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.stopDeviceMotionUpdates.setState", passthrough: AnyCodable(value: true)))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.stopDeviceMotionUpdates.call"))
+        //
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotion.setTestValue", value: AnyCodable(value:
+        //                                                                                                                                            [
+        //                                                                                                                                                "rotationRate": [
+        //                                                                                                                                                    "x": 1.5,
+        //                                                                                                                                                    "y": 0.5,
+        //                                                                                                                                                    "z": 2.5],
+        //                                                                                                                                                "gravity": [
+        //                                                                                                                                                    "x": 0.5,
+        //                                                                                                                                                    "y": 0.5,
+        //                                                                                                                                                    "z": 0.5],
+        //                                                                                                                                                "userAcceleration":[
+        //                                                                                                                                                    "x": 0.5,
+        //                                                                                                                                                    "y": 0.5,
+        //                                                                                                                                                    "z": 0.5],
+        //                                                                                                                                                "timestamp": 1581351985
+        //                                                                                                                                            ]
+        //
+        //                                                                                                                                         )))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.startDeviceMotionUpdatesWithHandler.setState", passthrough: AnyCodable(value: true)))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startDeviceMotionUpdatesWithHandler.call"))
+        //
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotion.getFrameworkValue"))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.deviceMotion.getTestFrameworkValue"))
         
-        // Set Coffe category
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.call", categories:
-                                                [NotificationCategory(identifier: "CoffeCategory",
-                                                                      actions: [NotificationAction(identifier: "Grabcoffe", title: "Do you want another coffe :)")])]))
-        // Add notitfication request - Coffe
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
-        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "CoffeTime", title: "Hey, it's coffe time", body: "Quick, grab your coffe", categoryIdentifier: "CoffeCategory", triggerTimeInterval: 0.5)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path: "/coreMotion.accelerometerUpdateInterval.setTestValue", value: AnyCodable(value: 2.0)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerUpdateInterval.getTestFrameworkValue"))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerUpdateInterval.getFrameworkValue"))
         
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, timeout: 5.0, data: Details(using: .text, value: "Do you want another coffe :)")))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startAccelerometerUpdates.setState", passthrough: AnyCodable(value: true)))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.startAccelerometerUpdates.call"))
         
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.setTestValue", value: AnyCodable(value:
+                                                                                                                                                    [
+                                                                                                                                                        "acceleration": [
+                                                                                                                                                            "x": 2.5,
+                                                                                                                                                            "y": 0.5,
+                                                                                                                                                            "z": 3.5
+                                                                                                                                                        ],
+                                                                                                                                                        "timestamp": 1581351985])))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.getTestFrameworkValue"))
+        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/coreMotion.accelerometerData.getFrameworkValue"))
+        
+        //
+        //
+        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, data: Details(using: .text, value: "Allow")))
+        //
+        //        // Supports content extensions
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.supportsContentExtensions.setTestValue", value: AnyCodable(value: true)))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.supportsContentExtensions.getTestFrameworkValue", timeout: 3.0))
+        //
+        //        // Set Meal category
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.setNotificationCategories.call", categories:
+        //                                                [NotificationCategory(identifier: "MealCategory",
+        //                                                                      actions: [NotificationAction(identifier: "MealTime", title: "Have a meal"),
+        //                                                                                NotificationAction(identifier: "PostponeTime", title: "Ask me in an hour"),
+        //                                                                                NotificationAction(identifier: "TomorrowTime", title: "Ask me in an tomorrow")])]))
+        //
+        //        // Add notitfication request - Meal
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
+        //        commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "/userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "MealTime", title: "It's time to eat something", body: "You scheduled your dinner for this hour", categoryIdentifier: "MealCategory", triggerTimeInterval: 0.5)))
+        //
+        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, timeout: 7.0, data: Details(using: .text, value: "Have a meal")))
+        //
         // Set Tea category
-          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
-          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.call", categories:
-                                                  [NotificationCategory(identifier: "TeaCategory",
-                                                                        actions: [NotificationAction(identifier: "TakeTea", title: "Take a tea break"),
-                                                                                  NotificationAction(identifier: "TakeCoffe", title: "More coffe??? That's not healthy")])]))
-  
-           // Add notitfication request - Tea
-          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
-          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "TeaTime", title: "Tea Break", body: "It is time for tea", categoryIdentifier: "TeaCategory", triggerTimeInterval: 1.0)))
+        //          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.setState", passthrough: AnyCodable(value: true)))
+        //          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.setNotificationCategories.call", categories:
+        //                                                  [NotificationCategory(identifier: "TeaCategory",
+        //                                                                        actions: [NotificationAction(identifier: "TakeTea", title: "Take a tea break"),
+        //                                                                                  NotificationAction(identifier: "TakeCoffe", title: "More coffe??? That's not healthy")])]))
+        //
+        //           // Add notitfication request - Tea
+        //          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.setState", passthrough: AnyCodable(value: true)))
+        //          commandsArray.append(SwizzlingCommand(method: .outcomingMessage, path:  "userNotificationCenter.addNotificationRequest.call", notificationRequest: NotificationRequest(identifier: "TeaTime", title: "Tea Break", body: "It is time for tea", categoryIdentifier: "TeaCategory", triggerTimeInterval: 1.0)))
+        //
+        //        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, timeout: 7.0, data: Details(using: .text, value: "TakeCoffe")))
         
-        commandsArray.append(OutcomingMessage(method: .outcomingMessage, path: .alertTap, timeout: 7.0, data: Details(using: .text, value: "TakeCoffe")))
-
         
         Task {
             for command in commandsArray {
@@ -144,11 +206,14 @@ final class WebSocketController {
         handleData(embededDict, data)
     }
     
+    
+    
     private func handleData(_ embededDict: [String: WebSocket], _ data: Data) {
         if let executionResponse = decoder.decode(type: ExecutionResponse.self, data: data) {
             handleResponse(executionResponse)
         }
-        if let messageResponse = decoder.decode(type: SocketStatusResponse.self, data: data) {
+        if let messageResponse = decoder.decode(type: ConnectionSource.self, data: data) {
+            
             handleResponse(messageResponse, embededDict: embededDict)
         }
     }
@@ -160,8 +225,8 @@ final class WebSocketController {
         print("Command executed with status \(status) : \(info)")
     }
     
-    private func handleResponse(_ response: SocketStatusResponse, embededDict: [String: WebSocket]) {
-        let status = response.message
+    private func handleResponse(_ response: ConnectionSource, embededDict: [String: WebSocket]) {
+        let status = response
         
         if socketsUUIDDict.keys.contains(status) {
             socketsUUIDDict.removeValue(forKey: status)
@@ -170,8 +235,8 @@ final class WebSocketController {
         socketsUUIDDict[status] = embededDict
         print(socketsUUIDDict)
         
-        if socketsUUIDDict.keys.contains(.joinedUI) &&
-            socketsUUIDDict.keys.contains(.joinedSwizzler) {
+        if socketsUUIDDict.keys.contains(.ui_connect) &&
+            socketsUUIDDict.keys.contains(.swizzling_connect) {
             sendTestMessages()
         }
     }
@@ -180,7 +245,7 @@ final class WebSocketController {
 extension WebSocketController {
     fileprivate func executeCommand(message: Codable) {
         commandsCount += 1
-        let source: ConnectionSource = message is OutcomingMessage ? .joinedUI : .joinedSwizzler
+        let source: ConnectionSource = message is OutcomingMessage ? .ui_connect : .swizzling_connect
         if message is OutcomingMessage {
             send(message: message as! OutcomingMessage, for: source)
         } else {

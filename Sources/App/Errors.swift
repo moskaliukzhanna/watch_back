@@ -48,20 +48,9 @@ struct ExecutionResponse: Codable {
     let status: Int
     let summary: String
     let detail: String
-    
-    
-//    init(status: WatchError) {
-//        self.summary = "\(status)"
-//        self.status = status.rawValue
-//        self.detail = status.descriprion
-//    }
 }
 
-struct SocketStatusResponse: Codable {
-    let message: ConnectionSource
-}
-
-enum ConnectionSource: String, Codable{
-    case joinedUI = "ui_connect"
-    case joinedSwizzler = "swizzling_connect"
+enum ConnectionSource: Decodable {
+    case ui_connect
+    case swizzling_connect
 }
